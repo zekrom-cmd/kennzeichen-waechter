@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 435,
+"frei_gesamt": 438,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -237,6 +237,7 @@
 ],
 "?|???|keine|glatt": [
 "SG-B900",
+"SG-E800",
 "SG-I700",
 "SG-J900",
 "SG-Q300",
@@ -250,6 +251,7 @@
 "?|??|keine|keine": [
 "SG-H86",
 "SG-J64",
+"SG-K77",
 "SG-N51",
 "SG-N59",
 "SG-N72",
@@ -285,7 +287,9 @@
 "C?|?|keine|keine": [
 "SG-CI9"
 ],
-"D?|?|keine|keine": [],
+"D?|?|keine|keine": [
+"SG-DA7"
+],
 "E?|?|keine|keine": [],
 "F?|?|keine|keine": [
 "SG-FC7",
@@ -499,10 +503,12 @@
 ]
 },
 "letzte_aenderung": {
-"neu": [],
-"weg": [
-"SG-TN5"
-]
+"neu": [
+"SG-DA7",
+"SG-E800",
+"SG-K77"
+],
+"weg": []
 },
-"zeit": "2026-10-09 04:57:21"
+"zeit": "2026-10-09 05:25:03"
 }
