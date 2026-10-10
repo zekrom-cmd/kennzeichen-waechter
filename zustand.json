@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 435,
+"frei_gesamt": 429,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -236,13 +236,7 @@
 "SG-Z789"
 ],
 "?|???|keine|glatt": [
-"SG-B900",
-"SG-I700",
-"SG-J900",
-"SG-Q300",
-"SG-Q400",
-"SG-Y600",
-"SG-Y800"
+"SG-B900"
 ],
 "?|???|keine|schnaps": [
 "SG-Z555"
@@ -502,8 +496,13 @@
 "letzte_aenderung": {
 "neu": [],
 "weg": [
-"SG-K77"
+"SG-I700",
+"SG-J900",
+"SG-Q300",
+"SG-Q400",
+"SG-Y600",
+"SG-Y800"
 ]
 },
-"zeit": "2026-10-09 13:43:58"
+"zeit": "2026-10-10 02:23:26"
 }
