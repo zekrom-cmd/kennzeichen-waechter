@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 444,
+"frei_gesamt": 443,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -253,7 +253,6 @@
 ],
 "?|??|keine|keine": [
 "SG-J64",
-"SG-L44",
 "SG-N51",
 "SG-N59",
 "SG-N72",
@@ -512,8 +511,8 @@
 "letzte_aenderung": {
 "neu": [],
 "weg": [
-"SG-H86"
+"SG-L44"
 ]
 },
-"zeit": "2026-10-11 13:25:34"
+"zeit": "2026-10-11 17:22:57"
 }
