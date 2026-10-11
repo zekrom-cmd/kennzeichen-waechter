@@ -1,9 +1,10 @@
 {
-"frei_gesamt": 435,
+"frei_gesamt": 438,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
 "SG-EE60",
+"SG-EE70",
 "SG-EE80",
 "SG-FF80",
 "SG-GG60",
@@ -24,6 +25,7 @@
 "SG-WW50",
 "SG-WW60",
 "SG-WW80",
+"SG-XX80",
 "SG-YY20",
 "SG-YY40",
 "SG-YY50",
@@ -237,6 +239,7 @@
 ],
 "?|???|keine|glatt": [
 "SG-B900",
+"SG-G300",
 "SG-I700",
 "SG-J900",
 "SG-Q300",
@@ -499,10 +502,12 @@
 ]
 },
 "letzte_aenderung": {
-"neu": [],
-"weg": [
-"SG-JY2"
-]
+"neu": [
+"SG-EE70",
+"SG-G300",
+"SG-XX80"
+],
+"weg": []
 },
-"zeit": "2026-10-10 16:36:10"
+"zeit": "2026-10-11 04:55:04"
 }
