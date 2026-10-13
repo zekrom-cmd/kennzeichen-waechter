@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 441,
+"frei_gesamt": 452,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -252,7 +252,9 @@
 "SG-Z555"
 ],
 "?|??|keine|keine": [
+"SG-B89",
 "SG-K97",
+"SG-N37",
 "SG-N51",
 "SG-N59",
 "SG-N72",
@@ -270,6 +272,7 @@
 "SG-Q74",
 "SG-Q79",
 "SG-Q86",
+"SG-Q96",
 "SG-R17",
 "SG-U41",
 "SG-U71",
@@ -283,6 +286,7 @@
 ],
 "A?|?|keine|keine": [
 "SG-AI3",
+"SG-AJ5",
 "SG-AU9"
 ],
 "B?|?|keine|keine": [],
@@ -300,6 +304,7 @@
 ],
 "G?|?|keine|keine": [
 "SG-GJ9",
+"SG-GQ5",
 "SG-GV5",
 "SG-GW5",
 "SG-GW8",
@@ -307,6 +312,7 @@
 ],
 "H?|?|keine|keine": [
 "SG-HM9",
+"SG-HP3",
 "SG-HW4"
 ],
 "I?|?|keine|keine": [
@@ -371,10 +377,10 @@
 "R?|?|keine|keine": [
 "SG-RB6",
 "SG-RO3",
-"SG-RY9"
+"SG-RY9",
+"SG-RZ4"
 ],
 "S?|?|keine|keine": [
-"SG-SI9",
 "SG-SN9"
 ],
 "T?|?|keine|keine": [
@@ -458,16 +464,19 @@
 "SG-WZ5"
 ],
 "X?|?|keine|keine": [
+"SG-XA4",
 "SG-XI5",
 "SG-XR6",
 "SG-XU6",
 "SG-XV5",
-"SG-XW5"
+"SG-XW5",
+"SG-XY3"
 ],
 "Y?|?|keine|keine": [
 "SG-YB5",
 "SG-YB7",
 "SG-YC6",
+"SG-YC7",
 "SG-YE3",
 "SG-YF6",
 "SG-YG4",
@@ -485,7 +494,8 @@
 "SG-YQ9",
 "SG-YV8",
 "SG-YW4",
-"SG-YW8"
+"SG-YW8",
+"SG-YX5"
 ],
 "Z?|?|keine|keine": [
 "SG-ZB8",
@@ -494,6 +504,7 @@
 "SG-ZI9",
 "SG-ZJ9",
 "SG-ZM6",
+"SG-ZQ9",
 "SG-ZT5",
 "SG-ZU2",
 "SG-ZU9",
@@ -505,10 +516,23 @@
 ]
 },
 "letzte_aenderung": {
-"neu": [],
+"neu": [
+"SG-AJ5",
+"SG-B89",
+"SG-GQ5",
+"SG-HP3",
+"SG-N37",
+"SG-Q96",
+"SG-RZ4",
+"SG-XA4",
+"SG-XY3",
+"SG-YC7",
+"SG-YX5",
+"SG-ZQ9"
+],
 "weg": [
-"SG-OW2"
+"SG-SI9"
 ]
 },
-"zeit": "2026-10-12 19:42:21"
+"zeit": "2026-10-13 05:08:50"
 }
