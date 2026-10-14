@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 443,
+"frei_gesamt": 444,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -273,6 +273,7 @@
 "SG-R17",
 "SG-U41",
 "SG-U71",
+"SG-V42",
 "SG-V73",
 "SG-V94",
 "SG-Y35",
@@ -372,7 +373,9 @@
 "SG-RO3",
 "SG-RY9"
 ],
-"S?|?|keine|keine": [],
+"S?|?|keine|keine": [
+"SG-SZ7"
+],
 "T?|?|keine|keine": [
 "SG-TY5",
 "SG-TY8"
@@ -468,7 +471,6 @@
 "SG-YC6",
 "SG-YC7",
 "SG-YE3",
-"SG-YF6",
 "SG-YG4",
 "SG-YG9",
 "SG-YH8",
@@ -506,10 +508,13 @@
 ]
 },
 "letzte_aenderung": {
-"neu": [],
+"neu": [
+"SG-SZ7",
+"SG-V42"
+],
 "weg": [
-"SG-O52"
+"SG-YF6"
 ]
 },
-"zeit": "2026-10-13 23:52:37"
+"zeit": "2026-10-14 05:05:49"
 }
