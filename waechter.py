@@ -36,6 +36,7 @@ JOBS = (
 # Bewusst nicht: AB 44 / AB 30 / AA 47 - davon ist noch die Haelfte frei, das waeren
 # pro Lauf ueber 1000 Suchen bei einem Portal, das nur ~1 Suche pro Sekunde schafft.
 PORTAL = "https://kfz-egov.regioit.de/wkz/?LICENSEIDENTIFIER=solingen_stadt"
+PORTAL_STOERUNG = ("Datenbank-Problem", "aktuell nicht genutzt", "Wartung")
 ZUSTAND = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zustand.json")
 
 
@@ -132,7 +133,15 @@ def main():
 
     t0 = time.time()
     portal = wkz.Portal("solingen_stadt", "elektro", delay=0.5)
-    portal.start()
+    try:
+        portal.start()
+    except RuntimeError as e:
+        # Portal meldet selbst eine Stoerung - kein Fehler des Waechters, still ueberspringen.
+        # Alles andere (z. B. geaenderte Seite) soll weiter als Fehler auffallen.
+        if any(h in str(e) for h in PORTAL_STOERUNG):
+            print("%s | Portal gestoert, Lauf uebersprungen: %s" % (time.strftime("%Y-%m-%d %H:%M:%S"), e))
+            return 0
+        raise
 
     neu, weg, fehler, suchen = set(), set(), [], 0
     for job in JOBS:
