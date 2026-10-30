@@ -47,7 +47,6 @@
 "SG-YY55"
 ],
 "?|???|keine|ab": [
-"SG-A543",
 "SG-A654",
 "SG-A876",
 "SG-B654",
@@ -238,7 +237,6 @@
 "SG-Z789"
 ],
 "?|???|keine|glatt": [
-"SG-E700",
 "SG-J900",
 "SG-Q300",
 "SG-Q400",
@@ -343,8 +341,11 @@
 ],
 "P?|?|keine|keine": [
 "SG-PG9",
+"SG-PH8",
 "SG-PQ3",
 "SG-PT6",
+"SG-PU2",
+"SG-PV5",
 "SG-PY6"
 ],
 "Q?|?|keine|keine": [
@@ -375,7 +376,6 @@
 ],
 "R?|?|keine|keine": [
 "SG-RB6",
-"SG-RG9",
 "SG-RY9"
 ],
 "S?|?|keine|keine": [
@@ -519,10 +519,16 @@
 ]
 },
 "letzte_aenderung": {
-"neu": [],
+"neu": [
+"SG-PH8",
+"SG-PU2",
+"SG-PV5"
+],
 "weg": [
-"SG-OI7"
+"SG-A543",
+"SG-E700",
+"SG-RG9"
 ]
 },
-"zeit": "2026-10-30 05:53:30"
+"zeit": "2026-10-30 11:44:49"
 }
