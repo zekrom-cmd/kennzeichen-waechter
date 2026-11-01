@@ -1,0 +1,16 @@
+// Cloudflare-Worker "kennzeichen-ping": schaut jede Minute, ob das Portal antwortet,
+// und startet den Waechter auf GitHub (workflow_dispatch). Deploy: siehe README.md im Repo.
+{
+  "name": "kennzeichen-ping",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-01",
+  "triggers": { "crons": ["* * * * *"] },
+  "kv_namespaces": [{ "binding": "STAND", "id": "9f1bf696e472417fb0ce777d8860d529" }],
+  "vars": {
+    "REPO": "zekrom-cmd/kennzeichen-waechter",
+    "WORKFLOW": "waechter.yml",
+    "TAKT_MIN": "10"
+  }
+  // Secret GITHUB_TOKEN (fine-grained, nur dieses Repo, Actions: Read and write)
+  // traegt der Nutzer selbst ein: wrangler secret put GITHUB_TOKEN
+}

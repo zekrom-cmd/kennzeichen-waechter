@@ -13,3 +13,18 @@ E-Kennzeichen neu frei wird. Nur lesend – es wird nichts reserviert.
 Das Portal schafft etwa eine Suche pro Sekunde, ein Lauf braucht rund 60 Suchen.
 `zustand.json` ist das Gedächtnis und wird nur bei Änderungen committet.
 Secret: `NTFY_TOPIC`.
+
+## Sofort-Start: Worker `ping/`
+
+GitHub drosselt den Cron oft auf alle paar Stunden. Der Cloudflare-Worker in `ping/` fragt deshalb
+jede Minute nur die Startseite des Portals ab und startet den Wächter per `workflow_dispatch`:
+sofort, wenn das Portal nach einer Störung wieder antwortet, sonst alle 10 Minuten. Solange das
+Portal gestört ist, startet er nichts. Der GitHub-Cron bleibt als Reserve.
+
+Einrichten (einmalig):
+
+1. GitHub → Settings → Developer settings → Fine-grained tokens → neues Token:
+   nur Repository `kennzeichen-waechter`, Berechtigung **Actions: Read and write**.
+2. Im Ordner `ping/`: `wrangler secret put GITHUB_TOKEN` (Token einfügen) und `wrangler deploy`.
+
+Stand ansehen: `https://kennzeichen-ping.<konto>.workers.dev/` (JSON), Protokoll: `wrangler tail`.
