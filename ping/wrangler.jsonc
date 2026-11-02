@@ -9,8 +9,11 @@
   "vars": {
     "REPO": "zekrom-cmd/kennzeichen-waechter",
     "WORKFLOW": "waechter.yml",
-    "TAKT_MIN": "10"
+    "TAKT_MIN": "10",
+    // Wunsch-Kennzeichen, jede Minute einzeln geprueft (Buchstaben+Ziffern, kommagetrennt)
+    "WUNSCH": "XX3"
   }
   // Secret GITHUB_TOKEN (fine-grained, nur dieses Repo, Actions: Read and write)
   // traegt der Nutzer selbst ein: wrangler secret put GITHUB_TOKEN
+  // Secret NTFY_TOPIC: dasselbe Thema wie beim Waechter (GitHub-Secret NTFY_TOPIC)
 }
