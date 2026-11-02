@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 451,
+"frei_gesamt": 465,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -163,6 +163,7 @@
 "SG-C789",
 "SG-D901",
 "SG-E890",
+"SG-F234",
 "SG-F789",
 "SG-F890",
 "SG-G456",
@@ -249,8 +250,9 @@
 ],
 "?|??|keine|keine": [
 "SG-I19",
+"SG-I37",
 "SG-K14",
-"SG-K97",
+"SG-L39",
 "SG-N51",
 "SG-N59",
 "SG-N72",
@@ -266,6 +268,7 @@
 "SG-Q74",
 "SG-Q79",
 "SG-Q86",
+"SG-Q88",
 "SG-Q96",
 "SG-Q97",
 "SG-R12",
@@ -277,14 +280,18 @@
 "SG-V89",
 "SG-V94",
 "SG-Y35",
+"SG-Y39",
 "SG-Y56",
 "SG-Y72",
 "SG-Z30",
 "SG-Z56",
 "SG-Z59",
-"SG-Z65"
+"SG-Z65",
+"SG-Z90"
 ],
-"A?|?|keine|keine": [],
+"A?|?|keine|keine": [
+"SG-AD8"
+],
 "B?|?|keine|keine": [],
 "C?|?|keine|keine": [
 "SG-CG4",
@@ -299,6 +306,7 @@
 "SG-FV6"
 ],
 "G?|?|keine|keine": [
+"SG-GG2",
 "SG-GJ9",
 "SG-GV5",
 "SG-GW5",
@@ -307,6 +315,7 @@
 ],
 "H?|?|keine|keine": [
 "SG-HC3",
+"SG-HL8",
 "SG-HM9",
 "SG-HW4",
 "SG-HY5"
@@ -323,7 +332,10 @@
 "L?|?|keine|keine": [
 "SG-LY6"
 ],
-"M?|?|keine|keine": [],
+"M?|?|keine|keine": [
+"SG-ME4",
+"SG-MF8"
+],
 "N?|?|keine|keine": [
 "SG-NK8",
 "SG-NU3",
@@ -340,6 +352,7 @@
 "P?|?|keine|keine": [
 "SG-PG9",
 "SG-PH8",
+"SG-PP3",
 "SG-PQ3",
 "SG-PT6",
 "SG-PU2",
@@ -361,6 +374,7 @@
 "SG-QN8",
 "SG-QO3",
 "SG-QO9",
+"SG-QR5",
 "SG-QT4",
 "SG-QT9",
 "SG-QU8",
@@ -374,6 +388,7 @@
 ],
 "R?|?|keine|keine": [
 "SG-RB6",
+"SG-RN9",
 "SG-RY9"
 ],
 "S?|?|keine|keine": [
@@ -470,12 +485,12 @@
 "SG-XK9",
 "SG-XU6",
 "SG-XV5",
-"SG-XW5"
+"SG-XW5",
+"SG-XX3"
 ],
 "Y?|?|keine|keine": [
 "SG-YB5",
 "SG-YB7",
-"SG-YC6",
 "SG-YC7",
 "SG-YE3",
 "SG-YE8",
@@ -495,7 +510,8 @@
 "SG-YV8",
 "SG-YW4",
 "SG-YW8",
-"SG-YX5"
+"SG-YX5",
+"SG-YY7"
 ],
 "Z?|?|keine|keine": [
 "SG-ZB8",
@@ -515,13 +531,28 @@
 ]
 },
 "letzte_aenderung": {
-"neu": [],
+"neu": [
+"SG-AD8",
+"SG-F234",
+"SG-GG2",
+"SG-HL8",
+"SG-I37",
+"SG-L39",
+"SG-ME4",
+"SG-MF8",
+"SG-PP3",
+"SG-Q88",
+"SG-QR5",
+"SG-RN9",
+"SG-XX3",
+"SG-Y39",
+"SG-YY7",
+"SG-Z90"
+],
 "weg": [
-"SG-GV8",
-"SG-OZ7",
-"SG-WD9",
-"SG-ZV8"
+"SG-K97",
+"SG-YC6"
 ]
 },
-"zeit": "2026-10-30 17:16:16"
+"zeit": "2026-11-02 11:52:29"
 }
