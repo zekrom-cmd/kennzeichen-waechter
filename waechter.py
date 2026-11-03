@@ -10,6 +10,9 @@ Fragt bei jedem Lauf ab:
     glatter Zahl (SG AA 44, SG AA 30)
 5-stellige bewusst nicht.
 
+Reihenfolge: X, Y, Z zuerst (Lieblinge), dann der Rest. Jeder Fund wird sofort
+gemeldet, nicht erst am Ende des Laufs - morgens um 7 zaehlt jede Minute.
+
 Nur lesend - es wird nichts reserviert. Gedaechtnis: zustand.json.
 Eine Suche, die fehlschlaegt, behaelt ihren alten Stand. So entstehen
 keine falschen "neu frei"-Meldungen.
@@ -21,6 +24,7 @@ keine falschen "neu frei"-Meldungen.
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -28,8 +32,11 @@ import urllib.request
 import wkz
 
 K = "keine"
+VORNE = "XYZ"
 JOBS = (
-    [("?", "??", K, K)] + [(b + "?", "?", K, K) for b in wkz.LETTERS]          # alle 3-stelligen
+    [j for b in VORNE for j in ((b, "??", K, K), (b + "?", "?", K, K))]           # X 12, XA 1 ... zuerst
+    + [("?", "??", K, K)]                                                         # A 12 (eine Suche, X/Y/Z doppelt)
+    + [(b + "?", "?", K, K) for b in wkz.LETTERS if b not in VORNE]               # AB 1
     + [("?", "???", K, z) for z in ("schnaps", "glatt", "auf", "ab")]          # A 444, A 300, A 123, A 321
     + [("??", "??", "gleich", z) for z in ("schnaps", "glatt")]                # AA 44, AA 30
 )
@@ -42,6 +49,15 @@ ZUSTAND = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zustand.json
 
 def schluessel(job):
     return "|".join(job)
+
+
+def deckt(job, roh):
+    """Faellt Kennzeichen roh (z. B. 'SG-X12') unter einen ungefilterten Job?"""
+    chars, nums, bs, zi = job
+    m = re.match(r"SG-([A-Z]+)(\d+)$", roh)
+    return bool(m) and bs == zi == K and all(
+        len(muster) == len(wert) and all(c in ("?", w) for c, w in zip(muster, wert))
+        for muster, wert in ((chars, m.group(1)), (nums, m.group(2))))
 
 
 def teile(chars, nums, bs):
@@ -130,6 +146,9 @@ def main():
     except (IOError, ValueError):
         zustand = {"jobs": {}}
     erster_lauf = not zustand["jobs"]
+    alt_alle = {p for ps in zustand["jobs"].values() for p in ps}
+    jobs_vorher = set(zustand["jobs"])
+    topic = os.environ.get("NTFY_TOPIC")
 
     t0 = time.time()
     portal = wkz.Portal("solingen_stadt", "elektro", delay=0.5)
@@ -143,7 +162,8 @@ def main():
             return 0
         raise
 
-    neu, weg, fehler, suchen = set(), set(), [], 0
+    neu, weg, fehler, suchen, push_fehler = set(), set(), [], 0, []
+    gemeldet = set()  # X/Y/Z stecken in zwei Jobs - jedes Kennzeichen nur einmal melden
     for job in JOBS:
         plates, n = frage_ab(portal, job)
         suchen += n
@@ -151,14 +171,38 @@ def main():
         if plates is None:
             fehler.append(key)
             continue
-        alt = set(zustand["jobs"].get(key, plates))
-        neu |= set(plates) - alt
+        if key in zustand["jobs"]:
+            alt = set(zustand["jobs"][key])
+        elif alt_alle and job[2] == job[3] == K:
+            # Neuer Job nach einem Umbau: Stand aus den alten Jobs uebernehmen,
+            # sonst waeren seine freien Kennzeichen beim ersten Lauf unbekannt
+            alt = {p for p in alt_alle if deckt(job, p)}
+        else:
+            alt = set(plates)
+        neu_hier = set(plates) - alt - gemeldet
+        gemeldet |= neu_hier
+        neu |= neu_hier
         weg |= alt - set(plates)
         zustand["jobs"][key] = plates
+        if neu_hier and not erster_lauf and not args.trocken:
+            if not topic:
+                push_fehler.append("NTFY_TOPIC fehlt")
+                continue
+            try:
+                melde(topic, neu_hier)
+            except Exception as e:
+                push_fehler.append(str(e))
+
+    # Jobs, die es nicht mehr gibt, rauswerfen - aber nur nach einem fehlerfreien Lauf,
+    # sonst fehlt ihr Stand, solange der neue Job noch keinen eigenen hat
+    aktuell = {schluessel(j) for j in JOBS}
+    umgebaut = not fehler and jobs_vorher != aktuell
+    if umgebaut:
+        zustand["jobs"] = {k: v for k, v in zustand["jobs"].items() if k in aktuell}
 
     alle = {p for ps in zustand["jobs"].values() for p in ps}
     # Nur bei Aenderungen schreiben - sonst wuerde jeder Lauf einen Commit erzeugen
-    if neu or weg or erster_lauf:
+    if neu or weg or erster_lauf or umgebaut:
         zustand["zeit"] = time.strftime("%Y-%m-%d %H:%M:%S")
         zustand["frei_gesamt"] = len(alle)
         zustand["letzte_aenderung"] = {"neu": sorted(neu), "weg": sorted(weg)}
@@ -171,12 +215,9 @@ def main():
              ", ".join(beschreibung(p)[0] for p in sorted(weg)) or "-",
              ", ".join(fehler) or "-"))
 
-    if neu and not erster_lauf and not args.trocken:
-        topic = os.environ.get("NTFY_TOPIC")
-        if not topic:
-            print("NTFY_TOPIC fehlt - keine Meldung gesendet")
-            return 1
-        melde(topic, neu)
+    if push_fehler:
+        print("Meldung nicht gesendet: " + "; ".join(push_fehler))
+        return 1
     return 0
 
 

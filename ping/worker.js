@@ -7,6 +7,11 @@
 //   - sonst alle TAKT_MIN Minuten, solange es laeuft
 // Bei einer Stoerung startet er nichts. Der GitHub-Cron bleibt als Reserve.
 //
+// Morgen-Fenster (MORGEN, z. B. "06:50-07:30", Berlin-Zeit): Das Portal gibt
+// abgelaufene Reservierungen taeglich gegen 7 Uhr frei. Dann startet der Worker
+// einmal eine Dauerschleife des Waechters bis zum Fensterende und schickt in
+// der Zeit keine weiteren Starts.
+//
 // Zusaetzlich fragt er die Wunsch-Kennzeichen (WUNSCH, z. B. "XX3,Z7") jede
 // Minute einzeln ab und schickt sofort einen ntfy-Push, wenn eins frei wird.
 // Nur lesend - es wird nichts reserviert.
@@ -143,7 +148,7 @@ class Sitzung {
 
 // -- GitHub und ntfy ----------------------------------------------------------
 
-async function starteWaechter(env) {
+async function starteWaechter(env, minuten = 0) {
   if (!env.GITHUB_TOKEN) return "GITHUB_TOKEN fehlt";
   const r = await fetch(
     `https://api.github.com/repos/${env.REPO}/actions/workflows/${env.WORKFLOW}/dispatches`,
@@ -154,7 +159,7 @@ async function starteWaechter(env) {
         Accept: "application/vnd.github+json",
         "User-Agent": "kennzeichen-ping",
       },
-      body: JSON.stringify({ ref: "main" }),
+      body: JSON.stringify(minuten ? { ref: "main", inputs: { minuten: String(minuten) } } : { ref: "main" }),
     },
   );
   return r.status === 204 ? null : "GitHub " + r.status + ": " + (await r.text()).slice(0, 200);
@@ -170,6 +175,23 @@ async function melde(env, titel, text) {
 }
 
 // -- Ablauf -------------------------------------------------------------------
+
+// Tag und Restminuten im Morgen-Fenster (Berlin-Zeit), rest = 0 ausserhalb
+function morgenFenster(env, t) {
+  const m = (env.MORGEN || "").match(/^(\d\d):(\d\d)-(\d\d):(\d\d)$/);
+  const teil = Object.fromEntries(
+    new Intl.DateTimeFormat("de-DE", {
+      timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(t).map((x) => [x.type, x.value]),
+  );
+  const tag = `${teil.year}-${teil.month}-${teil.day}`;
+  if (!m) return { tag, rest: 0 };
+  const jetzt = +teil.hour * 60 + +teil.minute;
+  const von = +m[1] * 60 + +m[2];
+  const bis = +m[3] * 60 + +m[4];
+  return { tag, rest: jetzt >= von && jetzt < bis ? bis - jetzt : 0 };
+}
 
 function wuensche(env) {
   return (env.WUNSCH || "").toUpperCase().split(",").map((w) => w.trim().match(/^([A-Z]{1,2})(\d{1,4})$/)).filter(Boolean);
@@ -215,7 +237,17 @@ async function lauf(env) {
   }
   const wiederDa = p.an && alt.an === false;
   const faellig = p.an && jetzt - alt.gestartet >= Number(env.TAKT_MIN) * 60000;
-  if (wiederDa || faellig) {
+  const morgen = morgenFenster(env, jetzt);
+  if (p.an && morgen.rest && alt.morgen !== morgen.tag) {
+    // Einmal pro Tag; schlaegt der Start fehl, versucht er es in der naechsten Minute wieder
+    neu.gestartet = jetzt;
+    neu.fehler = (await starteWaechter(env, morgen.rest)) || undefined;
+    if (!neu.fehler) neu.morgen = morgen.tag;
+    console.log(`Morgen-Schleife fuer ${morgen.rest} Min. gestartet` + (neu.fehler ? " - " + neu.fehler : ""));
+  } else if (morgen.rest) {
+    // Schleife laeuft schon (oder Portal aus) - nichts dazwischenschieben
+    if (!p.an) console.log("Portal aus: " + p.grund);
+  } else if (wiederDa || faellig) {
     neu.gestartet = jetzt;
     neu.fehler = (await starteWaechter(env)) || undefined;
     console.log((wiederDa ? "Portal wieder da, " : "") + "Waechter gestartet" + (neu.fehler ? " - " + neu.fehler : ""));
@@ -225,7 +257,7 @@ async function lauf(env) {
   if (p.an) neu.wunsch = await pruefeWuensche(env, sitzung, alt.wunsch);
 
   // Nur schreiben, wenn sich etwas Wesentliches geaendert hat (grund allein zaehlt nicht)
-  const kern = (s) => JSON.stringify([s.an, s.seit, s.gestartet, s.fehler, s.wunsch]);
+  const kern = (s) => JSON.stringify([s.an, s.seit, s.gestartet, s.fehler, s.wunsch, s.morgen]);
   if (kern(neu) !== kern(alt)) await env.STAND.put("stand", JSON.stringify(neu));
 }
 
@@ -242,6 +274,8 @@ export default {
       letzter_grund: s.grund || null,
       waechter_zuletzt_gestartet: zeit(s.gestartet),
       fehler_beim_start: s.fehler || null,
+      morgen_fenster: env.MORGEN || null,
+      morgen_schleife_zuletzt: s.morgen || null,
       wunsch: Object.fromEntries(
         wuensche(env).map(([w, b, z]) => [`SG ${b} ${z}E`, s.wunsch?.[w]
           ? `${s.wunsch[w].frei ? "frei" : "vergeben"} seit ${zeit(s.wunsch[w].seit)}` : "noch nicht geprueft"]),

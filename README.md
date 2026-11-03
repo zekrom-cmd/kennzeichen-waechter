@@ -11,6 +11,8 @@ E-Kennzeichen neu frei wird. Nur lesend – es wird nichts reserviert.
 - Doppelbuchstabe mit Schnaps- oder glatter Zahl (SG AA 44E, SG AA 30E)
 
 Das Portal schafft etwa eine Suche pro Sekunde, ein Lauf braucht rund 60 Suchen.
+X, Y und Z werden in jedem Lauf zuerst abgefragt, und jeder Fund wird sofort gemeldet
+(nicht erst am Ende des Laufs).
 `zustand.json` ist das Gedächtnis und wird nur bei Änderungen committet.
 Secret: `NTFY_TOPIC`.
 
@@ -20,6 +22,11 @@ GitHub drosselt den Cron oft auf alle paar Stunden. Der Cloudflare-Worker in `pi
 jede Minute nur die Startseite des Portals ab und startet den Wächter per `workflow_dispatch`:
 sofort, wenn das Portal nach einer Störung wieder antwortet, sonst alle 10 Minuten. Solange das
 Portal gestört ist, startet er nichts. Der GitHub-Cron bleibt als Reserve.
+
+Morgen-Fenster: Abgelaufene Reservierungen gibt das Portal täglich gegen 7:00 frei.
+Zwischen 06:50 und 07:30 (Var `MORGEN`) startet der Worker deshalb einmal eine Dauerschleife
+(`workflow_dispatch` mit `minuten`), die Runde um Runde durchläuft – ein Fund ist dann nach
+wenigen Minuten gemeldet statt nach bis zu 14.
 
 Einrichten (einmalig):
 

@@ -10,6 +10,8 @@
     "REPO": "zekrom-cmd/kennzeichen-waechter",
     "WORKFLOW": "waechter.yml",
     "TAKT_MIN": "10",
+    // Freigaben kommen taeglich gegen 7:00 -> Waechter laeuft dann in Dauerschleife (Berlin-Zeit)
+    "MORGEN": "06:50-07:30",
     // Wunsch-Kennzeichen, jede Minute einzeln geprueft (Buchstaben+Ziffern, kommagetrennt)
     "WUNSCH": "XX3"
   }

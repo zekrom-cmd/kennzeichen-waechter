@@ -4,6 +4,10 @@ on:
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
+    inputs:
+      minuten:
+        description: "Dauerschleife fuer so viele Minuten (Morgen-Fenster), 0 = ein Lauf"
+        default: "0"
 
 permissions:
   contents: write
@@ -15,21 +19,27 @@ concurrency:
 jobs:
   lauf:
     runs-on: ubuntu-latest
-    timeout-minutes: 9
+    # Normaler Lauf ~4 Min.; die Morgen-Schleife laeuft bis zu 40 Min. plus letzte Runde
+    timeout-minutes: ${{ fromJSON(inputs.minuten || '0') > 0 && 60 || 9 }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Kurze Kennzeichen abfragen
+      - name: Kurze Kennzeichen abfragen (Zustand nur bei Aenderung sichern)
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-        run: python3 waechter.py
-
-      - name: Zustand sichern (nur bei Aenderung)
+          MINUTEN: ${{ inputs.minuten || '0' }}
         run: |
           git config user.name "kennzeichen-waechter"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add zustand.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Zustand $(date -u +'%d.%m. %H:%M') UTC"
-            git push
-          fi
+          ende=$(( $(date +%s) + MINUTEN * 60 ))
+          fehler=0
+          while :; do
+            python3 waechter.py || fehler=1
+            git add zustand.json
+            if ! git diff --cached --quiet; then
+              git commit -q -m "Zustand $(date -u +'%d.%m. %H:%M') UTC"
+              git push -q || { git pull -q --rebase && git push -q; }
+            fi
+            [ "$(date +%s)" -lt "$ende" ] || break
+          done
+          exit $fehler
