@@ -27,6 +27,7 @@ jobs:
       - name: Kurze Kennzeichen abfragen (Zustand nur bei Aenderung sichern)
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOPIC_BRUDER: ${{ secrets.NTFY_TOPIC_BRUDER }}
           MINUTEN: ${{ inputs.minuten || '0' }}
         run: |
           git config user.name "kennzeichen-waechter"

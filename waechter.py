@@ -9,6 +9,9 @@ Fragt bei jedem Lauf ab:
     Folge (SG A 444, SG A 300, SG A 123) und Doppelbuchstabe mit Schnaps- oder
     glatter Zahl (SG AA 44, SG AA 30)
 5-stellige bewusst nicht.
+Fuer den Bruder zusaetzlich JS kurz oder mit Schnaps-/glatter Zahl/Folge
+(SG JS 7, SG JS 77, SG JS 777, SG JS 200, SG JS 123) - Meldung an NTFY_TOPIC_BRUDER,
+solange der fehlt an NTFY_TOPIC.
 
 Reihenfolge: X, Y, Z zuerst (Lieblinge), dann der Rest. Jeder Fund wird sofort
 gemeldet, nicht erst am Ende des Laufs - morgens um 7 zaehlt jede Minute.
@@ -33,10 +36,17 @@ import wkz
 
 K = "keine"
 VORNE = "XYZ"
+BRUDER = "JS"
+JOBS_BRUDER = (
+    [(BRUDER, "?", K, K)]
+    + [(BRUDER, "??", K, z) for z in ("schnaps", "glatt")]                       # JS 77, JS 70
+    + [(BRUDER, "???", K, z) for z in ("schnaps", "glatt", "auf", "ab")]         # JS 777, JS 700, JS 123
+)
 JOBS = (
     [j for b in VORNE for j in ((b, "??", K, K), (b + "?", "?", K, K))]           # X 12, XA 1 ... zuerst
     + [("?", "??", K, K)]                                                         # A 12 (eine Suche, X/Y/Z doppelt)
     + [(b + "?", "?", K, K) for b in wkz.LETTERS if b not in VORNE]               # AB 1
+    + JOBS_BRUDER                                                                 # vor den 4-stelligen
     + [("?", "???", K, z) for z in ("schnaps", "glatt", "auf", "ab")]          # A 444, A 300, A 123, A 321
     + [("??", "??", "gleich", z) for z in ("schnaps", "glatt")]                # AA 44, AA 30
 )
@@ -123,9 +133,9 @@ def beschreibung(roh):
     return "SG %s %sE" % (b, d), ", ".join(teile_), len(b) + len(d)
 
 
-def melde(topic, neu):
+def melde(topic, neu, dringend=False):
     infos = sorted((beschreibung(p) for p in neu), key=lambda x: (x[2], x[0]))
-    kurz = any(n == 3 for _t, _b, n in infos) or any(c in t.split()[1] for t, _b, _n in infos for c in "XYZ")
+    kurz = dringend or any(n == 3 for _t, _b, n in infos) or any(c in t.split()[1] for t, _b, _n in infos for c in "XYZ")
     titel = ("%s frei" % infos[0][0]) if len(infos) == 1 else "%d Kennzeichen neu frei" % len(infos)
     text = "\n".join("%s – %s" % (t, b) for t, b, _n in infos[:25])
     if len(infos) > 25:
@@ -149,6 +159,7 @@ def main():
     alt_alle = {p for ps in zustand["jobs"].values() for p in ps}
     jobs_vorher = set(zustand["jobs"])
     topic = os.environ.get("NTFY_TOPIC")
+    topic_bruder = os.environ.get("NTFY_TOPIC_BRUDER") or topic
 
     t0 = time.time()
     portal = wkz.Portal("solingen_stadt", "elektro", delay=0.5)
@@ -163,7 +174,7 @@ def main():
         raise
 
     neu, weg, fehler, suchen, push_fehler = set(), set(), [], 0, []
-    gemeldet = set()  # X/Y/Z stecken in zwei Jobs - jedes Kennzeichen nur einmal melden
+    gemeldet = set()  # (Thema, Kennzeichen): X/Y/Z und JS stecken in zwei Jobs - nur einmal melden
     for job in JOBS:
         plates, n = frage_ab(portal, job)
         suchen += n
@@ -179,17 +190,19 @@ def main():
             alt = {p for p in alt_alle if deckt(job, p)}
         else:
             alt = set(plates)
-        neu_hier = set(plates) - alt - gemeldet
-        gemeldet |= neu_hier
+        fuer_bruder = job in JOBS_BRUDER
+        an = topic_bruder if fuer_bruder else topic
+        neu_hier = {p for p in set(plates) - alt if (an, p) not in gemeldet}
+        gemeldet |= {(an, p) for p in neu_hier}
         neu |= neu_hier
         weg |= alt - set(plates)
         zustand["jobs"][key] = plates
         if neu_hier and not erster_lauf and not args.trocken:
-            if not topic:
+            if not an:
                 push_fehler.append("NTFY_TOPIC fehlt")
                 continue
             try:
-                melde(topic, neu_hier)
+                melde(an, neu_hier, dringend=fuer_bruder)
             except Exception as e:
                 push_fehler.append(str(e))
 

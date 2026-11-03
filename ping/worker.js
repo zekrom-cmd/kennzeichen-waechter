@@ -14,6 +14,7 @@
 //
 // Zusaetzlich fragt er die Wunsch-Kennzeichen (WUNSCH, z. B. "XX3,Z7") jede
 // Minute einzeln ab und schickt sofort einen ntfy-Push, wenn eins frei wird.
+// Wuensche aus WUNSCH_BRUDER gehen zusaetzlich an NTFY_TOPIC_BRUDER.
 // Nur lesend - es wird nichts reserviert.
 //
 // KV wird nur bei Aenderungen beschrieben (Free-Plan: 1000 Schreibvorgaenge/Tag).
@@ -165,13 +166,15 @@ async function starteWaechter(env, minuten = 0) {
   return r.status === 204 ? null : "GitHub " + r.status + ": " + (await r.text()).slice(0, 200);
 }
 
-async function melde(env, titel, text) {
-  if (!env.NTFY_TOPIC) return console.log("NTFY_TOPIC fehlt - " + titel);
-  await fetch("https://ntfy.sh/" + env.NTFY_TOPIC, {
-    method: "POST",
-    body: text,
-    headers: { Title: titel, Priority: "urgent", Click: PORTAL },
-  });
+async function melde(env, titel, text, bruder = false) {
+  const themen = [...new Set([env.NTFY_TOPIC, bruder && env.NTFY_TOPIC_BRUDER].filter(Boolean))];
+  if (!themen.length) return console.log("NTFY_TOPIC fehlt - " + titel);
+  for (const t of themen)
+    await fetch("https://ntfy.sh/" + t, {
+      method: "POST",
+      body: text,
+      headers: { Title: titel, Priority: "urgent", Click: PORTAL },
+    });
 }
 
 // -- Ablauf -------------------------------------------------------------------
@@ -193,8 +196,11 @@ function morgenFenster(env, t) {
   return { tag, rest: jetzt >= von && jetzt < bis ? bis - jetzt : 0 };
 }
 
+// [wunsch, buchstaben, ziffern, fuerBruder]
 function wuensche(env) {
-  return (env.WUNSCH || "").toUpperCase().split(",").map((w) => w.trim().match(/^([A-Z]{1,2})(\d{1,4})$/)).filter(Boolean);
+  const liste = (v, bruder) => (v || "").toUpperCase().split(",")
+    .map((w) => w.trim().match(/^([A-Z]{1,2})(\d{1,4})$/)).filter(Boolean).map((m) => [...m, bruder]);
+  return [...liste(env.WUNSCH, false), ...liste(env.WUNSCH_BRUDER, true)];
 }
 
 async function pruefeWuensche(env, sitzung, alt) {
@@ -203,7 +209,7 @@ async function pruefeWuensche(env, sitzung, alt) {
   if (!liste.length) return stand;
   try {
     await sitzung.zurSuche();
-    for (const [w, b, z] of liste) {
+    for (const [w, b, z, bruder] of liste) {
       const frei = await sitzung.istFrei(b, z);
       if (frei === null) {
         console.log(`${b} ${z}: unklar - ` + meldungen(sitzung.seite).join(" / "));
@@ -214,7 +220,7 @@ async function pruefeWuensche(env, sitzung, alt) {
         console.log(`SG ${b} ${z}E ist jetzt ${frei ? "FREI" : "vergeben"}`);
         if (frei) {
           const uhr = new Date().toLocaleTimeString("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" });
-          await melde(env, `SG ${b} ${z}E ist frei!`, `Wunschkennzeichen um ${uhr} frei gesehen - schnell reservieren.`);
+          await melde(env, `SG ${b} ${z}E ist frei!`, `Wunschkennzeichen um ${uhr} frei gesehen - schnell reservieren.`, bruder);
         }
       }
     }

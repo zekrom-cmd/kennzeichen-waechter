@@ -13,7 +13,9 @@
     // Freigaben kommen taeglich gegen 7:00 -> Waechter laeuft dann in Dauerschleife (Berlin-Zeit)
     "MORGEN": "06:50-07:30",
     // Wunsch-Kennzeichen, jede Minute einzeln geprueft (Buchstaben+Ziffern, kommagetrennt)
-    "WUNSCH": "XX3"
+    "WUNSCH": "XX3",
+    // Wuensche des Bruders - Push zusaetzlich an Secret NTFY_TOPIC_BRUDER (falls gesetzt)
+    "WUNSCH_BRUDER": "GG2"
   }
   // Secret GITHUB_TOKEN (fine-grained, nur dieses Repo, Actions: Read and write)
   // traegt der Nutzer selbst ein: wrangler secret put GITHUB_TOKEN
