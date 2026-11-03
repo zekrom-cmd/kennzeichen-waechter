@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 451,
+"frei_gesamt": 457,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -252,11 +252,13 @@
 "SG-I37",
 "SG-L39",
 "SG-N51",
+"SG-N57",
 "SG-N59",
 "SG-N72",
 "SG-N94",
 "SG-O54",
 "SG-O74",
+"SG-O91",
 "SG-Q26",
 "SG-Q39",
 "SG-Q47",
@@ -281,6 +283,7 @@
 "SG-Y39",
 "SG-Y56",
 "SG-Y72",
+"SG-Z22",
 "SG-Z30",
 "SG-Z56",
 "SG-Z59",
@@ -310,12 +313,14 @@
 ],
 "H?|?|keine|keine": [
 "SG-HC3",
+"SG-HD8",
 "SG-HL8",
 "SG-HM9",
 "SG-HW4",
 "SG-HY5"
 ],
 "I?|?|keine|keine": [
+"SG-IF5",
 "SG-IU5",
 "SG-IU6",
 "SG-IZ3"
@@ -325,6 +330,7 @@
 "SG-KU7"
 ],
 "L?|?|keine|keine": [
+"SG-LR2",
 "SG-LY6"
 ],
 "M?|?|keine|keine": [],
@@ -516,10 +522,15 @@
 ]
 },
 "letzte_aenderung": {
-"neu": [],
-"weg": [
-"SG-PH8"
-]
+"neu": [
+"SG-HD8",
+"SG-IF5",
+"SG-LR2",
+"SG-N57",
+"SG-O91",
+"SG-Z22"
+],
+"weg": []
 },
-"zeit": "2026-11-03 04:11:35"
+"zeit": "2026-11-03 06:05:02"
 }
