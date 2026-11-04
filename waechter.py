@@ -15,6 +15,7 @@ solange der fehlt an NTFY_TOPIC.
 
 Reihenfolge: X, Y, Z zuerst (Lieblinge), dann der Rest. Jeder Fund wird sofort
 gemeldet, nicht erst am Ende des Laufs - morgens um 7 zaehlt jede Minute.
+Drei Portal-Sitzungen suchen gleichzeitig (PARALLEL).
 
 Nur lesend - es wird nichts reserviert. Gedaechtnis: zustand.json.
 Eine Suche, die fehlschlaegt, behaelt ihren alten Stand. So entstehen
@@ -27,14 +28,17 @@ keine falschen "neu frei"-Meldungen.
 import argparse
 import json
 import os
+import queue
 import re
 import sys
 import time
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import wkz
 
 K = "keine"
+PARALLEL = 3  # Sitzungen gleichzeitig - das Portal braucht 2,5-5 s pro Suche, die Pause davor kaum
 VORNE = "XYZ"
 BRUDER = "JS"
 JOBS_BRUDER = (
@@ -162,9 +166,10 @@ def main():
     topic_bruder = os.environ.get("NTFY_TOPIC_BRUDER") or topic
 
     t0 = time.time()
-    portal = wkz.Portal("solingen_stadt", "elektro", delay=0)
+    portale = queue.Queue()
     try:
-        portal.start()
+        for _ in range(PARALLEL):
+            portale.put(wkz.Portal("solingen_stadt", "elektro", delay=0).start())
     except RuntimeError as e:
         # Portal meldet selbst eine Stoerung - kein Fehler des Waechters, still ueberspringen.
         # Alles andere (z. B. geaenderte Seite) soll weiter als Fehler auffallen.
@@ -173,10 +178,21 @@ def main():
             return 0
         raise
 
+    def mit_portal(job):
+        # Jede Sitzung hat ihr eigenes Cookie - sie duerfen sich nicht ueberholen
+        portal = portale.get()
+        try:
+            return frage_ab(portal, job)
+        finally:
+            portale.put(portal)
+
     neu, weg, fehler, suchen, push_fehler = set(), set(), [], 0, []
     gemeldet = set()  # (Thema, Kennzeichen): X/Y/Z und JS stecken in zwei Jobs - nur einmal melden
-    for job in JOBS:
-        plates, n = frage_ab(portal, job)
+    pool = ThreadPoolExecutor(PARALLEL)
+    laeufe = {pool.submit(mit_portal, job): job for job in JOBS}   # Reihenfolge bleibt: X/Y/Z starten zuerst
+    for fertig in as_completed(laeufe):
+        job = laeufe[fertig]
+        plates, n = fertig.result()
         suchen += n
         key = schluessel(job)
         if plates is None:
@@ -205,6 +221,7 @@ def main():
                 melde(an, neu_hier, dringend=fuer_bruder)
             except Exception as e:
                 push_fehler.append(str(e))
+    pool.shutdown()
 
     # Jobs, die es nicht mehr gibt, rauswerfen - aber nur nach einem fehlerfreien Lauf,
     # sonst fehlt ihr Stand, solange der neue Job noch keinen eigenen hat
