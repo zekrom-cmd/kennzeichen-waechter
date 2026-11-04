@@ -162,7 +162,7 @@ def main():
     topic_bruder = os.environ.get("NTFY_TOPIC_BRUDER") or topic
 
     t0 = time.time()
-    portal = wkz.Portal("solingen_stadt", "elektro", delay=0.5)
+    portal = wkz.Portal("solingen_stadt", "elektro", delay=0)
     try:
         portal.start()
     except RuntimeError as e:
