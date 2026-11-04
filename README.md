@@ -1,6 +1,6 @@
 # Kennzeichen-Wächter Solingen
 
-Fragt alle 10 Minuten (GitHub-Cron, real eher 10–20 Min.) das Wunschkennzeichen-Portal
+Fragt tagsüber alle 5 Minuten (Worker `ping/`, Var `TAKT_MIN`) das Wunschkennzeichen-Portal
 der Stadt Solingen ab und meldet per [ntfy](https://ntfy.sh), wenn ein kurzes
 E-Kennzeichen neu frei wird. Nur lesend – es wird nichts reserviert.
 
@@ -23,7 +23,7 @@ Secrets: `NTFY_TOPIC`, optional `NTFY_TOPIC_BRUDER`.
 
 GitHub drosselt den Cron oft auf alle paar Stunden. Der Cloudflare-Worker in `ping/` fragt deshalb
 jede Minute nur die Startseite des Portals ab und startet den Wächter per `workflow_dispatch`:
-sofort, wenn das Portal nach einer Störung wieder antwortet, sonst alle 10 Minuten. Solange das
+sofort, wenn das Portal nach einer Störung wieder antwortet, sonst alle 5 Minuten. Solange das
 Portal gestört ist, startet er nichts. Der GitHub-Cron bleibt als Reserve.
 
 Morgen-Fenster: Abgelaufene Reservierungen gibt das Portal täglich gegen 7:00 frei.
