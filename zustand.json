@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 466,
+"frei_gesamt": 471,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -295,6 +295,7 @@
 "D?|?|keine|keine": [],
 "E?|?|keine|keine": [],
 "F?|?|keine|keine": [
+"SG-FI7",
 "SG-FV6"
 ],
 "G?|?|keine|keine": [
@@ -347,12 +348,15 @@
 "JS|??|keine|schnaps": [],
 "JS|?|keine|keine": [],
 "K?|?|keine|keine": [
+"SG-KC7",
 "SG-KU7"
 ],
 "L?|?|keine|keine": [
 "SG-LY6"
 ],
-"M?|?|keine|keine": [],
+"M?|?|keine|keine": [
+"SG-MM7"
+],
 "N?|?|keine|keine": [
 "SG-NU3",
 "SG-NV5"
@@ -383,6 +387,7 @@
 "SG-QI5",
 "SG-QI9",
 "SG-QK4",
+"SG-QL4",
 "SG-QN8",
 "SG-QO3",
 "SG-QO9",
@@ -536,6 +541,7 @@
 "SG-ZI9",
 "SG-ZJ6",
 "SG-ZJ9",
+"SG-ZM1",
 "SG-ZQ9",
 "SG-ZT5",
 "SG-ZU2",
@@ -554,9 +560,13 @@
 },
 "letzte_aenderung": {
 "neu": [
-"SG-NN30"
+"SG-FI7",
+"SG-KC7",
+"SG-MM7",
+"SG-QL4",
+"SG-ZM1"
 ],
 "weg": []
 },
-"zeit": "2026-11-04 06:01:51"
+"zeit": "2026-11-04 06:05:23"
 }
