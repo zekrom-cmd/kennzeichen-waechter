@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 465,
+"frei_gesamt": 464,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -287,9 +287,7 @@
 "SG-Z65"
 ],
 "A?|?|keine|keine": [],
-"B?|?|keine|keine": [
-"SG-BW1"
-],
+"B?|?|keine|keine": [],
 "C?|?|keine|keine": [
 "SG-CG4"
 ],
@@ -553,13 +551,10 @@
 ]
 },
 "letzte_aenderung": {
-"neu": [
-"SG-BW1",
-"SG-F72",
-"SG-Y67",
-"SG-ZJ2"
-],
-"weg": []
+"neu": [],
+"weg": [
+"SG-BW1"
+]
 },
-"zeit": "2026-11-11 06:06:00"
+"zeit": "2026-11-11 06:19:00"
 }
