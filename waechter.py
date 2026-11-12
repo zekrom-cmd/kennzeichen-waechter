@@ -153,7 +153,11 @@ def melde(topic, neu, dringend=False):
     text = "\n".join("%s – %s" % (t, b) for t, b, _n in infos[:25])
     if len(infos) > 25:
         text += "\n… und %d weitere" % (len(infos) - 25)
-    headers = {"Title": titel, "Priority": "urgent" if kurz else "high", "Click": PORTAL}
+    sende(topic, titel, text, "urgent" if kurz else "high")
+
+
+def sende(topic, titel, text, prio):
+    headers = {"Title": titel, "Priority": prio, "Click": PORTAL}
     # Mit Token zaehlt die Nachricht zum ntfy-Account (Pro-Limits) statt zur geteilten Runner-IP (250/Tag)
     if os.environ.get("NTFY_TOKEN"):
         headers["Authorization"] = "Bearer " + os.environ["NTFY_TOKEN"]
@@ -165,7 +169,14 @@ def melde(topic, neu, dringend=False):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--trocken", action="store_true", help="nichts senden, nur ausgeben")
+    ap.add_argument("--testpush", action="store_true", help="nur eine Test-Meldung an NTFY_TOPIC senden")
     args = ap.parse_args()
+
+    if args.testpush:
+        weg = "über den ntfy-Account (Token)" if os.environ.get("NTFY_TOKEN") else "anonym (ohne Token)"
+        sende(os.environ["NTFY_TOPIC"], "Test: Kennzeichen-Wächter", "Diese Meldung kam %s." % weg, "default")
+        print("Test-Meldung gesendet, " + weg)
+        return 0
 
     try:
         zustand = json.load(open(ZUSTAND, encoding="utf-8"))

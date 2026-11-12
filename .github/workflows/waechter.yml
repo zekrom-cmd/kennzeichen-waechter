@@ -8,6 +8,9 @@ on:
       minuten:
         description: "Dauerschleife fuer so viele Minuten (Morgen-Fenster), 0 = ein Lauf"
         default: "0"
+      testpush:
+        description: "ja = nur eine Test-Meldung an NTFY_TOPIC senden"
+        default: "nein"
 
 permissions:
   contents: write
@@ -30,7 +33,9 @@ jobs:
           NTFY_TOPIC_BRUDER: ${{ secrets.NTFY_TOPIC_BRUDER }}
           NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
           MINUTEN: ${{ inputs.minuten || '0' }}
+          TESTPUSH: ${{ inputs.testpush || 'nein' }}
         run: |
+          if [ "$TESTPUSH" = "ja" ]; then exec python3 waechter.py --testpush; fi
           git config user.name "kennzeichen-waechter"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           ende=$(( $(date +%s) + MINUTEN * 60 ))
