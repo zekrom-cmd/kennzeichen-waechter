@@ -8,6 +8,7 @@ Fragt bei jedem Lauf ab:
   - die knappen 4-stelligen: ein Buchstabe mit Schnapszahl, glatter Zahl oder
     Folge (SG A 444, SG A 300, SG A 123) und Doppelbuchstabe mit Schnaps- oder
     glatter Zahl (SG AA 44, SG AA 30)
+  - X, Y, Z auch 4-stellig komplett (SG X 158, SG XA 12) - als letzte Suchen
 5-stellige bewusst nicht.
 Fuer den Bruder zusaetzlich JS kurz oder mit Schnaps-/glatter Zahl/Folge
 (SG JS 7, SG JS 77, SG JS 777, SG JS 200, SG JS 123) - Meldung an NTFY_TOPIC_BRUDER,
@@ -53,6 +54,7 @@ JOBS = (
     + JOBS_BRUDER                                                                 # vor den 4-stelligen
     + [("?", "???", K, z) for z in ("schnaps", "glatt", "auf", "ab")]          # A 444, A 300, A 123, A 321
     + [("??", "??", "gleich", z) for z in ("schnaps", "glatt")]                # AA 44, AA 30
+    + [j for b in VORNE for j in ((b, "???", K, K), (b + "?", "??", K, K))]     # X 158, XA 12 - zuletzt
 )
 # Bewusst nicht: AB 44 / AB 30 / AA 47 - davon ist noch die Haelfte frei, das waeren
 # pro Lauf ueber 1000 Suchen bei einem Portal, das nur ~1 Suche pro Sekunde schafft.
@@ -72,6 +74,13 @@ def deckt(job, roh):
     return bool(m) and bs == zi == K and all(
         len(muster) == len(wert) and all(c in ("?", w) for c, w in zip(muster, wert))
         for muster, wert in ((chars, m.group(1)), (nums, m.group(2))))
+
+
+def umfasst(alt, neu):
+    """Deckt der ungefilterte Job alt alles ab, was Job neu findet?"""
+    return alt[2] == alt[3] == K and all(
+        len(a) == len(n) and all(x == "?" or x == y for x, y in zip(a, n))
+        for a, n in ((alt[0], neu[0]), (alt[1], neu[1])))
 
 
 def teile(chars, nums, bs):
@@ -144,9 +153,12 @@ def melde(topic, neu, dringend=False):
     text = "\n".join("%s – %s" % (t, b) for t, b, _n in infos[:25])
     if len(infos) > 25:
         text += "\n… und %d weitere" % (len(infos) - 25)
+    headers = {"Title": titel, "Priority": "urgent" if kurz else "high", "Click": PORTAL}
+    # Mit Token zaehlt die Nachricht zum ntfy-Account (Pro-Limits) statt zur geteilten Runner-IP (250/Tag)
+    if os.environ.get("NTFY_TOKEN"):
+        headers["Authorization"] = "Bearer " + os.environ["NTFY_TOKEN"]
     req = urllib.request.Request(
-        "https://ntfy.sh/" + topic, data=text.encode("utf-8"), method="POST",
-        headers={"Title": titel, "Priority": "urgent" if kurz else "high", "Click": PORTAL})
+        "https://ntfy.sh/" + topic, data=text.encode("utf-8"), method="POST", headers=headers)
     urllib.request.urlopen(req, timeout=20).read()
 
 
@@ -200,9 +212,10 @@ def main():
             continue
         if key in zustand["jobs"]:
             alt = set(zustand["jobs"][key])
-        elif alt_alle and job[2] == job[3] == K:
+        elif alt_alle and job[2] == job[3] == K and any(umfasst(k.split("|"), job) for k in jobs_vorher):
             # Neuer Job nach einem Umbau: Stand aus den alten Jobs uebernehmen,
-            # sonst waeren seine freien Kennzeichen beim ersten Lauf unbekannt
+            # sonst waeren seine freien Kennzeichen beim ersten Lauf unbekannt.
+            # Deckte vorher kein Job diesen Bereich ab, gilt der erste Lauf als Ausgangsstand (keine Push-Flut).
             alt = {p for p in alt_alle if deckt(job, p)}
         else:
             alt = set(plates)

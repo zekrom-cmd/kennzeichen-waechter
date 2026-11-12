@@ -28,6 +28,7 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           NTFY_TOPIC_BRUDER: ${{ secrets.NTFY_TOPIC_BRUDER }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
           MINUTEN: ${{ inputs.minuten || '0' }}
         run: |
           git config user.name "kennzeichen-waechter"
