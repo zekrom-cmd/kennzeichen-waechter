@@ -144,23 +144,37 @@ def beschreibung(roh):
     return "SG %s %sE" % (b, d), ", ".join(teile_), len(b) + len(d)
 
 
-def melde(topic, neu, dringend=False):
-    infos = sorted((beschreibung(p) for p in neu), key=lambda x: (x[2], x[0]))
-    kurz = dringend or any(n == 3 for _t, _b, n in infos) or any(c in t.split()[1] for t, _b, _n in infos for c in "XYZ")
-    titel = ("%s frei" % infos[0][0]) if len(infos) == 1 else "%d Kennzeichen neu frei" % len(infos)
-    text = "\n".join("%s – %s" % (t, b) for t, b, _n in infos[:25])
+def gut(roh):
+    """X/Y/Z, Doppelbuchstabe oder Schnapszahl - nur dafuer klingelt es laut."""
+    _k, (_kreis, b, z) = wkz.parse_plate(roh)
+    d = str(z)
+    return any(c in b for c in VORNE) or (len(b) == 2 and b[0] == b[1]) or (len(d) >= 2 and len(set(d)) == 1)
+
+
+def melde(topic, neu, dringend=False, praefix=""):
+    # Die guten zuerst, dann die kuerzesten - das erste steht im Titel und hinter "Am Auto ansehen"
+    liste = sorted(neu, key=lambda p: (not gut(p), beschreibung(p)[2], beschreibung(p)[0]))
+    infos = [beschreibung(p) for p in liste]
+    titel = praefix + "%s frei" % infos[0][0] + (" (+%d %s)" % (len(infos) - 1, "weiteres" if len(infos) == 2 else "weitere") if len(infos) > 1 else "")
+    text = "\n".join(("★ " if gut(p) else "") + "%s – %s" % (t, b) for p, (t, b, _n) in zip(liste, infos[:25]))
     if len(infos) > 25:
         text += "\n… und %d weitere" % (len(infos) - 25)
-    sende(topic, titel, text, "urgent" if kurz else "high")
+    _k, (kreis, b, z) = wkz.parse_plate(liste[0])
+    knoepfe = [("Portal öffnen", PORTAL), ("Am Auto ansehen", "https://takeo.cx/kennzeichen/?k=%s-%s-%dE" % (kreis, b, z))]
+    # laut (5) nur bei guten Funden und beim Bruder, der Rest kommt still (2)
+    sende(topic, titel, text, 5 if dringend or gut(liste[0]) else 2, knoepfe)
 
 
-def sende(topic, titel, text, prio):
-    headers = {"Title": titel, "Priority": prio, "Click": PORTAL}
+def sende(topic, titel, text, prio, knoepfe=()):
+    # Als JSON statt Kopfzeilen: Umlaute im Titel und Knoepfe kommen so sauber an
+    nachricht = {"topic": topic, "title": titel, "message": text, "priority": prio, "click": PORTAL,
+                 "actions": [{"action": "view", "label": l, "url": u} for l, u in knoepfe]}
+    headers = {"Content-Type": "application/json"}
     # Mit Token zaehlt die Nachricht zum ntfy-Account (Pro-Limits) statt zur geteilten Runner-IP (250/Tag)
     if os.environ.get("NTFY_TOKEN"):
         headers["Authorization"] = "Bearer " + os.environ["NTFY_TOKEN"]
     req = urllib.request.Request(
-        "https://ntfy.sh/" + topic, data=text.encode("utf-8"), method="POST", headers=headers)
+        "https://ntfy.sh/", data=json.dumps(nachricht).encode("utf-8"), method="POST", headers=headers)
     urllib.request.urlopen(req, timeout=20).read()
 
 
@@ -171,8 +185,9 @@ def main():
     args = ap.parse_args()
 
     if args.testpush:
+        # Beispiel-Fund im echten Format, deutlich als Test markiert
         weg = "über den ntfy-Account (Token)" if os.environ.get("NTFY_TOKEN") else "anonym (ohne Token)"
-        sende(os.environ["NTFY_TOPIC"], "Test: Kennzeichen-Wächter", "Diese Meldung kam %s." % weg, "default")
+        melde(os.environ["NTFY_TOPIC"], {"SG-YY5", "SG-QW6", "SG-N57"}, praefix="TEST – ")
         print("Test-Meldung gesendet, " + weg)
         return 0
 
