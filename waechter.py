@@ -8,7 +8,6 @@ Fragt bei jedem Lauf ab:
   - die knappen 4-stelligen: ein Buchstabe mit Schnapszahl, glatter Zahl oder
     Folge (SG A 444, SG A 300, SG A 123) und Doppelbuchstabe mit Schnaps- oder
     glatter Zahl (SG AA 44, SG AA 30)
-  - X, Y, Z auch 4-stellig komplett (SG X 158, SG XA 12) - als letzte Suchen
 5-stellige bewusst nicht.
 Fuer den Bruder zusaetzlich JS kurz oder mit Schnaps-/glatter Zahl/Folge
 (SG JS 7, SG JS 77, SG JS 777, SG JS 200, SG JS 123) - Meldung an NTFY_TOPIC_BRUDER,
@@ -54,7 +53,6 @@ JOBS = (
     + JOBS_BRUDER                                                                 # vor den 4-stelligen
     + [("?", "???", K, z) for z in ("schnaps", "glatt", "auf", "ab")]          # A 444, A 300, A 123, A 321
     + [("??", "??", "gleich", z) for z in ("schnaps", "glatt")]                # AA 44, AA 30
-    + [j for b in VORNE for j in ((b, "???", K, K), (b + "?", "??", K, K))]     # X 158, XA 12 - zuletzt
 )
 # Bewusst nicht: AB 44 / AB 30 / AA 47 - davon ist noch die Haelfte frei, das waeren
 # pro Lauf ueber 1000 Suchen bei einem Portal, das nur ~1 Suche pro Sekunde schafft.
