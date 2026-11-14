@@ -1,5 +1,5 @@
 {
-"frei_gesamt": 472,
+"frei_gesamt": 471,
 "jobs": {
 "??|??|gleich|glatt": [
 "SG-AA90",
@@ -32,7 +32,6 @@
 "SG-YY80"
 ],
 "??|??|gleich|schnaps": [
-"SG-BB88",
 "SG-FF33",
 "SG-GG88",
 "SG-NN66",
@@ -565,8 +564,8 @@
 "letzte_aenderung": {
 "neu": [],
 "weg": [
-"SG-RM2"
+"SG-BB88"
 ]
 },
-"zeit": "2026-11-14 08:51:58"
+"zeit": "2026-11-14 13:41:46"
 }
