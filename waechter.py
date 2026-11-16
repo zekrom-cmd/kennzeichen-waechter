@@ -169,12 +169,21 @@ def sende(topic, titel, text, prio, knoepfe=()):
     # Als JSON statt Kopfzeilen: Umlaute im Titel und Knoepfe kommen so sauber an
     nachricht = {"topic": topic, "title": titel, "message": text, "priority": prio, "click": PORTAL,
                  "actions": [{"action": "view", "label": l, "url": u} for l, u in knoepfe]}
-    headers = {"Content-Type": "application/json"}
+    daten = json.dumps(nachricht).encode("utf-8")
     # Mit Token zaehlt die Nachricht zum ntfy-Account (Pro-Limits) statt zur geteilten Runner-IP (250/Tag)
-    if os.environ.get("NTFY_TOKEN"):
-        headers["Authorization"] = "Bearer " + os.environ["NTFY_TOKEN"]
-    req = urllib.request.Request(
-        "https://ntfy.sh/", data=json.dumps(nachricht).encode("utf-8"), method="POST", headers=headers)
+    token = os.environ.get("NTFY_TOKEN")
+    if token:
+        try:
+            req = urllib.request.Request("https://ntfy.sh/", data=daten, method="POST",
+                                         headers={"Content-Type": "application/json", "Authorization": "Bearer " + token})
+            urllib.request.urlopen(req, timeout=20).read()
+            return
+        except urllib.error.HTTPError as e:
+            # Token abgelaufen/geloescht (16.11.: 401) - lieber anonym senden als die Meldung verlieren
+            if e.code not in (401, 403):
+                raise
+            print("Warnung: ntfy-Token abgelehnt (%d), Meldung anonym gesendet - Token erneuern" % e.code)
+    req = urllib.request.Request("https://ntfy.sh/", data=daten, method="POST", headers={"Content-Type": "application/json"})
     urllib.request.urlopen(req, timeout=20).read()
 
 
