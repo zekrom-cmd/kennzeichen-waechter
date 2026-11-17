@@ -264,9 +264,16 @@ async function fragBrief(nummer) {
   return m[1];
 }
 
+// ZB-II-Nummer: 2 Buchstaben + 6 Ziffern (z. B. AB123456). Das Portal nimmt auch
+// Unsinn an und sagt dann "liegt nicht vor" - darum vorher pruefen.
+const zb2 = (env) => (env.BRIEF_ZB2 || "").trim().toUpperCase();
+const zb2Ok = (n) => /^[A-Z]{2}\d{6}$/.test(n);
+const zb2Kurz = (n) => (zb2Ok(n) ? n.slice(0, 2) + "…" + n.slice(-2) : `ungueltig (${n.length} Zeichen, erwartet 2 Buchstaben + 6 Ziffern)`);
+
 async function pruefeBrief(env) {
-  const nummer = (env.BRIEF_ZB2 || "").trim().toUpperCase();
+  const nummer = zb2(env);
   if (!nummer) return;
+  if (!zb2Ok(nummer)) return console.log("BRIEF_ZB2 ungueltig: " + nummer.length + " Zeichen");
   const alt = (await env.STAND.get("brief", "json")) || {};
   const neu = { ...alt };
   const jetzt = Date.now();
@@ -357,9 +364,12 @@ export default {
           ? `${s.wunsch[w].frei ? "frei" : "vergeben"} seit ${zeit(s.wunsch[w].seit)}` : "noch nicht geprueft"]),
       ),
       // Ohne Nummer - die Seite ist oeffentlich
-      fahrzeugbrief: !env.BRIEF_ZB2 ? "aus (Secret BRIEF_ZB2 fehlt)" : b.satz
-        ? { auskunft: b.satz, seit: zeit(b.seit), stoerung_seit: zeit(b.fehlerSeit), letzter_fehler: b.fehlerSeit ? b.letzterFehler : null }
-        : "noch nicht geprueft",
+      fahrzeugbrief: !env.BRIEF_ZB2 ? "aus (Secret BRIEF_ZB2 fehlt)" : {
+        nummer: zb2Kurz(zb2(env)),
+        ...(!zb2Ok(zb2(env)) ? { auskunft: "keine Abfrage - Nummer pruefen" } : b.satz
+          ? { auskunft: b.satz, seit: zeit(b.seit), stoerung_seit: zeit(b.fehlerSeit), letzter_fehler: b.fehlerSeit ? b.letzterFehler : null }
+          : { auskunft: "noch nicht geprueft" }),
+      },
     });
   },
 };
