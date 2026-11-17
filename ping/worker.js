@@ -17,6 +17,11 @@
 // Wuensche aus WUNSCH_BRUDER gehen zusaetzlich an NTFY_TOPIC_BRUDER.
 // Nur lesend - es wird nichts reserviert.
 //
+// Fahrzeugbrief (Bankbriefauskunft, /abb/): Ist das Secret BRIEF_ZB2 gesetzt
+// (Nummer der ZB Teil II), fragt er alle 2 Minuten ab, ob der Brief in der
+// Zulassungsstelle vorliegt, und schickt einen dringenden Push, sobald sich die
+// Antwort von "liegt nicht vor" aendert. Die Nummer steht nur im Secret, nicht im Repo.
+//
 // KV wird nur bei Aenderungen beschrieben (Free-Plan: 1000 Schreibvorgaenge/Tag).
 // GET / zeigt den Stand als JSON.
 
@@ -55,7 +60,8 @@ class Sitzung {
   // Minuten-Crons duerfen nicht ewig laufen; das Portal braucht nach Stoerungen
   // bis zu 5 s pro Seite. Nach ZEITBUDGET bricht die Sitzung ab, der Stand wird
   // trotzdem gespeichert.
-  constructor(zeitbudget = 24000) {
+  constructor(zeitbudget = 24000, basis = BASE) {
+    this.basis = basis;
     this.ende = Date.now() + zeitbudget;
     this.kekse = new Map();
     this.seite = "";
@@ -98,7 +104,7 @@ class Sitzung {
   klick(aktion, extra = {}) {
     const f = this.seite.match(/<form[^>]*action="([^"]+)"/);
     if (!f) throw new Error("kein Formular auf der Seite");
-    return this.hole(new URL(unescape(f[1]), BASE).toString(), { ...versteckt(this.seite), ...extra, [aktion]: "" });
+    return this.hole(new URL(unescape(f[1]), this.basis).toString(), { ...versteckt(this.seite), ...extra, [aktion]: "" });
   }
 
   // Erster Schritt = Erreichbarkeits-Pruefung
@@ -166,15 +172,20 @@ async function starteWaechter(env, minuten = 0) {
   return r.status === 204 ? null : "GitHub " + r.status + ": " + (await r.text()).slice(0, 200);
 }
 
-async function melde(env, titel, text, bruder = false) {
+async function melde(env, titel, text, bruder = false, klick = PORTAL, prio = "urgent") {
   const themen = [...new Set([env.NTFY_TOPIC, bruder && env.NTFY_TOPIC_BRUDER].filter(Boolean))];
   if (!themen.length) return console.log("NTFY_TOPIC fehlt - " + titel);
-  for (const t of themen)
-    await fetch("https://ntfy.sh/" + t, {
+  for (const t of themen) {
+    const senden = (token) => fetch("https://ntfy.sh/", {
       method: "POST",
-      body: text,
-      headers: { Title: titel, Priority: "urgent", Click: PORTAL },
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+      body: JSON.stringify({ topic: t, title: titel, message: text, priority: prio === "urgent" ? 5 : 3, click: klick }),
     });
+    // Mit Token ueber den ntfy-Account (eigenes Limit); wird er abgelehnt, anonym senden
+    let r = env.NTFY_TOKEN ? await senden(env.NTFY_TOKEN) : null;
+    if (!r || r.status === 401 || r.status === 403) r = await senden(null);
+    if (!r.ok) console.log("ntfy " + r.status + " fuer " + titel);
+  }
 }
 
 // -- Ablauf -------------------------------------------------------------------
@@ -230,6 +241,62 @@ async function pruefeWuensche(env, sitzung, alt) {
   return stand;
 }
 
+// -- Fahrzeugbrief (Bankbriefauskunft) ---------------------------------------
+
+const ABB = "https://kfz-egov.regioit.de/abb/";
+const ABB_START = ABB + "?LICENSEIDENTIFIER=solingen_stadt";
+const ALARM_NACH = 60 * 60000; // so lange darf die Abfrage scheitern, bevor ein leiser Hinweis kommt
+
+const klartext = (seite) =>
+  unescape(seite.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/g, "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+
+// Liefert den Ergebnis-Satz, z. B. "Die Zulassungsbescheinigung Teil II bzw. der Fahrzeugbrief liegt nicht vor."
+async function fragBrief(nummer) {
+  const s = new Sitzung(20000, ABB);
+  await s.hole(ABB_START, null, 15000);
+  if (!s.seite.includes("ACTION_CONTEXTSTART_NEXT")) throw new Error("Startseite unerwartet (HTTP " + s.status + ")");
+  await s.klick("ACTION_CONTEXTSTART_NEXT");
+  if (!s.seite.includes("USERINPUT_ZB2NR")) throw new Error("Eingabemaske fehlt: " + meldungen(s.seite).join(" / "));
+  await s.klick("ACTION_CONTEXTUSERINPUT_NEXT", { USERINPUT_ZB2NR: nummer, USERINPUT_AKZ: "", USERINPUT_NACHNAME: "" });
+  const t = klartext(s.seite);
+  const m = t.match(/Name des Fahrzeughalters:\s*(.*?)\s*(Downloads|Impressum|$)/);
+  if (!t.includes("Anfrage vom") || !m || !m[1]) throw new Error("kein Ergebnis: " + (meldungen(s.seite).join(" / ") || t.slice(0, 150)));
+  return m[1];
+}
+
+async function pruefeBrief(env) {
+  const nummer = (env.BRIEF_ZB2 || "").trim().toUpperCase();
+  if (!nummer) return;
+  const alt = (await env.STAND.get("brief", "json")) || {};
+  const neu = { ...alt };
+  const jetzt = Date.now();
+  try {
+    const satz = await fragBrief(nummer);
+    neu.fehlerSeit = undefined;
+    neu.fehlerGemeldet = undefined;
+    if (satz !== alt.satz) {
+      neu.satz = satz;
+      neu.seit = jetzt;
+      console.log("Brief: " + satz);
+      // Erste Abfrage mit "liegt nicht vor" = Ausgangslage, kein Push
+      if (!/liegt nicht vor/i.test(satz))
+        await melde(env, /liegt\b.*\bvor/i.test(satz) ? "Fahrzeugbrief ist da!" : "Fahrzeugbrief: neue Auskunft",
+          satz + "\n\nJetzt bei der Zulassungsstelle Solingen anmelden.", false, ABB_START);
+    }
+  } catch (e) {
+    console.log("Brief-Abfrage fehlgeschlagen: " + e);
+    neu.fehlerSeit = alt.fehlerSeit || jetzt;
+    neu.letzterFehler = String(e).slice(0, 200);
+    if (!alt.fehlerGemeldet && jetzt - neu.fehlerSeit >= ALARM_NACH) {
+      neu.fehlerGemeldet = true;
+      await melde(env, "Brief-Abfrage klemmt", "Seit einer Stunde keine Antwort von der Bankbriefauskunft: " + neu.letzterFehler, false, ABB_START, "default");
+    }
+  }
+  // Nur bei Aenderung schreiben (letzterFehler allein zaehlt nicht)
+  const kern = (b) => JSON.stringify([b.satz, b.seit, b.fehlerSeit, b.fehlerGemeldet]);
+  if (kern(neu) !== kern(alt)) await env.STAND.put("brief", JSON.stringify(neu));
+}
+
 async function lauf(env) {
   const alt = (await env.STAND.get("stand", "json")) || { an: null, seit: 0, gestartet: 0 };
   const jetzt = Date.now();
@@ -268,11 +335,14 @@ async function lauf(env) {
 }
 
 export default {
-  async scheduled(_event, env) {
-    await lauf(env);
+  async scheduled(event, env) {
+    // Brief nur jede 2. Minute, unabhaengig vom Kennzeichen-Portal
+    const brief = new Date(event.scheduledTime).getUTCMinutes() % 2 === 0 ? pruefeBrief(env) : null;
+    await Promise.all([lauf(env), brief].filter(Boolean).map((p) => p.catch((e) => console.log("Fehler: " + e))));
   },
   async fetch(_req, env) {
     const s = (await env.STAND.get("stand", "json")) || {};
+    const b = (await env.STAND.get("brief", "json")) || {};
     const zeit = (t) => (t ? new Date(t).toLocaleString("de-DE", { timeZone: "Europe/Berlin" }) : null);
     return Response.json({
       portal: s.an === true ? "erreichbar" : s.an === false ? "gestoert" : "noch nicht geprueft",
@@ -286,6 +356,10 @@ export default {
         wuensche(env).map(([w, b, z]) => [`SG ${b} ${z}E`, s.wunsch?.[w]
           ? `${s.wunsch[w].frei ? "frei" : "vergeben"} seit ${zeit(s.wunsch[w].seit)}` : "noch nicht geprueft"]),
       ),
+      // Ohne Nummer - die Seite ist oeffentlich
+      fahrzeugbrief: !env.BRIEF_ZB2 ? "aus (Secret BRIEF_ZB2 fehlt)" : b.satz
+        ? { auskunft: b.satz, seit: zeit(b.seit), stoerung_seit: zeit(b.fehlerSeit), letzter_fehler: b.fehlerSeit ? b.letzterFehler : null }
+        : "noch nicht geprueft",
     });
   },
 };

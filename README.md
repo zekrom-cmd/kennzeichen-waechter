@@ -34,6 +34,12 @@ wenigen Minuten gemeldet statt nach bis zu 14.
 Wunsch-Kennzeichen prüft der Worker jede Minute einzeln: `WUNSCH` (Push an `NTFY_TOPIC`) und
 `WUNSCH_BRUDER` (Push zusätzlich an das Worker-Secret `NTFY_TOPIC_BRUDER`).
 
+Fahrzeugbrief: Ist das Worker-Secret `BRIEF_ZB2` gesetzt (Nummer der ZB Teil II), fragt der Worker
+alle 2 Minuten die Bankbriefauskunft der Stadt Solingen (`/abb/`) ab und schickt einen dringenden
+Push, sobald die Antwort nicht mehr „liegt nicht vor“ lautet. Klemmt die Abfrage eine Stunde lang,
+kommt ein leiser Hinweis. Die Nummer steht nur im Secret. Optional `NTFY_TOKEN` als Worker-Secret:
+Pushes laufen dann über den ntfy-Account statt anonym über die geteilte Cloudflare-IP.
+
 Einrichten (einmalig):
 
 1. GitHub → Settings → Developer settings → Fine-grained tokens → neues Token:
