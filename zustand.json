@@ -258,6 +258,7 @@
 "SG-N51",
 "SG-N57",
 "SG-N59",
+"SG-N63",
 "SG-N72",
 "SG-N94",
 "SG-O57",
@@ -316,7 +317,6 @@
 "H?|?|keine|keine": [
 "SG-HP5",
 "SG-HR3",
-"SG-HS9",
 "SG-HW4",
 "SG-HY5"
 ],
@@ -566,14 +566,11 @@
 },
 "letzte_aenderung": {
 "neu": [
-"SG-E38",
-"SG-HP5",
-"SG-HS9",
-"SG-L700",
-"SG-RC4",
-"SG-SE8"
+"SG-N63"
 ],
-"weg": []
+"weg": [
+"SG-HS9"
+]
 },
-"zeit": "2026-11-18 06:03:10"
+"zeit": "2026-11-18 06:05:31"
 }
